@@ -5,6 +5,7 @@ import {ProductItem} from '~/components/ProductItem';
 import {CategoryStrip} from '~/components/CategoryStrip';
 import {TopBrands} from '~/components/TopBrands';
 import {HomeProductGrid} from '~/components/HomeProductGrid';
+import {BlogSection} from '~/components/BlogSection';
 import {HeroCarousel} from '~/components/HeroCarousel';
 
 /**
@@ -33,28 +34,39 @@ export async function loader(args) {
  * @param {Route.LoaderArgs}
  */
 async function loadCriticalData({context}) {
-  const [featuredResult, categoryResult, brandsResult, homeProductsResult] =
-    await Promise.all([
-      context.storefront.query(FEATURED_COLLECTION_QUERY),
-      context.storefront
-        .query(CATEGORY_COLLECTIONS_QUERY)
-        .catch((error) => {
-          console.error('Error loading category collections', error);
-          return null;
-        }),
-      context.storefront
-        .query(TOP_BRANDS_COLLECTIONS_QUERY)
-        .catch((error) => {
-          console.error('Error loading top brands metaobjects', error);
-          return null;
-        }),
-      context.storefront
-        .query(HOME_PRODUCTS_QUERY)
-        .catch((error) => {
-          console.error('Error loading home products', error);
-          return null;
-        }),
-    ]);
+  const [
+    featuredResult,
+    categoryResult,
+    brandsResult,
+    homeProductsResult,
+    blogArticlesResult,
+  ] = await Promise.all([
+    context.storefront.query(FEATURED_COLLECTION_QUERY),
+    context.storefront
+      .query(CATEGORY_COLLECTIONS_QUERY)
+      .catch((error) => {
+        console.error('Error loading category collections', error);
+        return null;
+      }),
+    context.storefront
+      .query(TOP_BRANDS_COLLECTIONS_QUERY)
+      .catch((error) => {
+        console.error('Error loading top brands metaobjects', error);
+        return null;
+      }),
+    context.storefront
+      .query(HOME_PRODUCTS_QUERY)
+      .catch((error) => {
+        console.error('Error loading home products', error);
+        return null;
+      }),
+    context.storefront
+      .query(LATEST_BLOG_ARTICLES_QUERY)
+      .catch((error) => {
+        console.error('Error loading blog articles', error);
+        return null;
+      }),
+  ]);
   
   const featuredCollection = featuredResult.collections.nodes[0];
 
@@ -102,11 +114,29 @@ async function loadCriticalData({context}) {
       variants: p.variants,
     })) ?? [];
 
+  const blogPosts =
+    blogArticlesResult?.blogs?.nodes
+      ?.flatMap((blogNode) => {
+        if (!blogNode?.articles?.nodes?.length) return [];
+        return blogNode.articles.nodes.map((article) => ({
+          id: article.id,
+          title: article.title,
+          excerpt: article.excerpt,
+          imageUrl: article.image?.url ?? null,
+          imageAlt: article.image?.altText ?? null,
+          author: article.author?.name ?? blogNode.title,
+          publishedAt: article.publishedAt,
+          href: `/blogs/${article.blog?.handle ?? blogNode.handle}/${article.handle}`,
+        }));
+      })
+      ?.slice(0, 3) ?? [];
+
   return {
     featuredCollection,
     categoryItems,
     brandItems,
     homeProducts,
+    blogPosts,
   };
 }
 
@@ -140,6 +170,7 @@ export default function Homepage() {
       <CategoryStrip title="Explore by Category" items={data.categoryItems} />
       <TopBrands title="Top Brands" items={data.brandItems} />
       <HomeProductGrid title="Shop the Latest" products={data.homeProducts} />
+      <BlogSection posts={data.blogPosts} />
       {/* <RecommendedProducts products={data.recommendedProducts} /> */}
     </div>
   );
@@ -213,6 +244,39 @@ const FEATURED_COLLECTION_QUERY = `#graphql
     collections(first: 1, sortKey: UPDATED_AT, reverse: true) {
       nodes {
         ...FeaturedCollection
+      }
+    }
+  }
+`;
+
+const LATEST_BLOG_ARTICLES_QUERY = `#graphql
+  query LatestBlogArticles($country: CountryCode, $language: LanguageCode)
+    @inContext(country: $country, language: $language) {
+    blogs(first: 1) {
+      nodes {
+        id
+        handle
+        title
+        articles(first: 3, sortKey: PUBLISHED_AT, reverse: true) {
+          nodes {
+            id
+            title
+            handle
+            excerpt
+            publishedAt
+            image {
+              id
+              altText
+              url
+            }
+            author: authorV2 {
+              name
+            }
+            blog {
+              handle
+            }
+          }
+        }
       }
     }
   }
