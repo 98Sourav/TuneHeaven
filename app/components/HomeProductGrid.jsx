@@ -80,7 +80,7 @@ export function HomeProductGrid({title = 'Featured Products', products}) {
 
   return (
     <section className="w-full bg-slate-950 py-10 text-slate-50 sm:py-12">
-      <div className="mx-auto w-full px-4 sm:px-6 lg:px-10">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-10">
         {/* Section header */}
         <div className="flex items-center gap-3 pb-6 sm:pb-8">
           <div className="hidden flex-1 border-t border-slate-800 sm:block" />
@@ -91,11 +91,17 @@ export function HomeProductGrid({title = 'Featured Products', products}) {
         </div>
 
         {/* Product grid */}
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {products.map((product) => (
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {products.map((product, index) => (
             <div
               key={product.id}
-              className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/60 shadow-[0_18px_45px_rgba(15,23,42,0.9)] transition-transform duration-150 hover:-translate-y-1 hover:border-emerald-400/70"
+              className="group relative flex h-full flex-col bg-gradient-to-br from-slate-900/70 via-slate-900/50 to-slate-950/80 shadow-[0_20px_50px_rgba(2,6,23,0.8)] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_30px_70px_rgba(16,185,129,0.12)]"
+              style={{
+                clipPath: index % 2 === 0 
+                  ? 'polygon(0 0, 100% 0, 100% calc(100% - 24px), calc(100% - 24px) 100%, 0 100%)' 
+                  : 'polygon(0 0, 100% 0, 100% 100%, 24px 100%, 0 calc(100% - 24px))',
+                border: '1.5px solid rgba(148, 163, 184, 0.15)',
+              }}
             >
               {/* Favorite icon */}
               <button
@@ -130,27 +136,29 @@ export function HomeProductGrid({title = 'Featured Products', products}) {
                 prefetch="intent"
                 className="flex flex-1 flex-col"
               >
-                <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-900">
+                <div className="relative aspect-square w-full overflow-hidden bg-slate-900">
                   {product.imageUrl ? (
                     <img
                       src={product.imageUrl}
                       alt={product.title}
                       loading="lazy"
-                      className="h-full w-full object-cover object-center transition-transform duration-200 group-hover:scale-105"
+                      className="h-full w-full object-cover object-center transition-all duration-300 group-hover:scale-110 group-hover:brightness-105"
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center text-xs uppercase tracking-[0.18em] text-slate-400">
                       No image
                     </div>
                   )}
+                  {/* Gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 </div>
 
-                <div className="flex flex-1 flex-col gap-1 px-3 pb-3 pt-3 sm:px-4 sm:pb-4">
-                  <h3 className="line-clamp-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-100 sm:text-sm">
+                <div className="flex flex-1 flex-col gap-1.5 px-3 pb-2.5 pt-3 sm:px-3.5 sm:pb-3">
+                  <h3 className="line-clamp-2 text-[11px] font-bold uppercase leading-tight tracking-[0.14em] text-slate-100 sm:text-xs">
                     {product.title}
                   </h3>
                   {product.price ? (
-                    <p className="mt-1 text-xs font-medium text-emerald-300 sm:text-sm">
+                    <p className="text-xs font-semibold text-emerald-400 sm:text-sm">
                       {product.price}
                     </p>
                   ) : null}

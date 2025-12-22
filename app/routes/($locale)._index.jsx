@@ -1,5 +1,5 @@
 import {Await, useLoaderData, Link, useRouteLoaderData} from 'react-router';
-import {Suspense} from 'react';
+import {Suspense, useEffect} from 'react';
 import {Image} from '@shopify/hydrogen';
 import {ProductItem} from '~/components/ProductItem';
 import {CategoryStrip} from '~/components/CategoryStrip';
@@ -7,12 +7,13 @@ import {TopBrands} from '~/components/TopBrands';
 import {HomeProductGrid} from '~/components/HomeProductGrid';
 import {BlogSection} from '~/components/BlogSection';
 import {HeroCarousel} from '~/components/HeroCarousel';
+import {useScrollReveal} from '~/hooks/useScrollReveal';
 
 /**
  * @type {Route.MetaFunction}
  */
 export const meta = () => {
-  return [{title: 'Hydrogen | Home'}];
+  return [{title: 'Welcome to TuneHeaven'}];
 };
 
 /**
@@ -164,13 +165,32 @@ export default function Homepage() {
   /** @type {LoaderReturnData} */
   const data = useLoaderData();
   const rootData = useRouteLoaderData('root');
+  const categoryRef = useScrollReveal();
+  const topBrandsRef = useScrollReveal();
+  const productsRef = useScrollReveal();
+  const blogRef = useScrollReveal();
+
+  useEffect(() => {
+    document.body.classList.add('home-theme');
+    return () => {
+      document.body.classList.remove('home-theme');
+    };
+  }, []);
   return (
     <div className="home">
       <HeroCarousel slides={rootData.heroSlides} />
-      <CategoryStrip title="Explore by Category" items={data.categoryItems} />
-      <TopBrands title="Top Brands" items={data.brandItems} />
-      <HomeProductGrid title="Shop the Latest" products={data.homeProducts} />
-      <BlogSection posts={data.blogPosts} />
+      <div ref={categoryRef}>
+        <CategoryStrip title="Explore by Category" items={data.categoryItems} />
+      </div>
+      <div ref={topBrandsRef}>
+        <TopBrands title="Top Brands" items={data.brandItems} />
+      </div>
+      <div ref={productsRef}>
+        <HomeProductGrid title="Shop the Latest" products={data.homeProducts} />
+      </div>
+      <div ref={blogRef}>
+        <BlogSection posts={data.blogPosts} />
+      </div>
       {/* <RecommendedProducts products={data.recommendedProducts} /> */}
     </div>
   );

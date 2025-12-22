@@ -246,7 +246,7 @@ function FavoritesToggle() {
     >
       <IconHeart />
       <span className="text-[0.85rem] font-medium tracking-[0.08em] uppercase">
-        Favorites
+      
       </span>
       {favoritesCount > 0 && (
         <span className="text-[0.75rem] text-emerald-300">({favoritesCount})</span>
@@ -390,7 +390,24 @@ function CartToggle({cart}) {
 function CartBanner() {
   const originalCart = useAsyncValue();
   const cart = useOptimisticCart(originalCart);
-  return <CartBadge count={cart?.totalQuantity ?? 0} />;
+  const [liveCount, setLiveCount] = useState(null);
+
+  useEffect(() => {
+    const handleQuantityChange = (event) => {
+      if (typeof event.detail === 'number') {
+        setLiveCount(event.detail);
+      }
+    };
+    window.addEventListener('cartQuantityChanged', handleQuantityChange);
+    return () => window.removeEventListener('cartQuantityChanged', handleQuantityChange);
+  }, []);
+
+  useEffect(() => {
+    setLiveCount(null);
+  }, [cart?.totalQuantity]);
+
+  const count = liveCount ?? cart?.totalQuantity ?? 0;
+  return <CartBadge count={count} />;
 }
 
 function MobileNavOverlay({open, onClose, header, publicStoreDomain}) {
