@@ -24,6 +24,19 @@ export default async function handleRequest(
     },
     // Allow local dev images, Shopify CDN, and external images from Pexels
     imgSrc: ["'self'", 'https://cdn.shopify.com', 'https://images.pexels.com'],
+    frameSrc: [
+      "'self'",
+      'https://www.youtube.com',
+      'https://youtube.com',
+      'https://player.vimeo.com',
+    ],
+    mediaSrc: [
+      "'self'",
+      'https://www.youtube.com',
+      'https://youtube.com',
+      'https://player.vimeo.com',
+      'https://cdn.shopify.com',
+    ],
   });
 
   const body = await renderToReadableStream(

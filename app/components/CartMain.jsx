@@ -1,3 +1,4 @@
+import {useEffect} from 'react';
 import {useOptimisticCart} from '@shopify/hydrogen';
 import {Link} from 'react-router';
 import {useAside} from '~/components/Aside';
@@ -20,6 +21,16 @@ export function CartMain({layout, cart: originalCart}) {
     Boolean(cart?.discountCodes?.filter((code) => code.applicable)?.length);
   const className = `cart-main ${withDiscount ? 'with-discount' : ''}`;
   const cartHasItems = cart?.totalQuantity ? cart.totalQuantity > 0 : false;
+  const totalQuantity = cart?.totalQuantity ?? 0;
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(
+      new CustomEvent('cartQuantityChanged', {
+        detail: totalQuantity,
+      }),
+    );
+  }, [totalQuantity]);
 
   return (
     <div className={className}>

@@ -102,20 +102,111 @@ export default function Product() {
     selectedOrFirstAvailableVariant: selectedVariant,
   });
 
-  const {title, descriptionHtml, images} = product;
+  const {title, descriptionHtml} = product;
 
-  // Collect all product images for the gallery
-  const allImages = images?.nodes || [];
-  const [selectedImage, setSelectedImage] = React.useState(
-    selectedVariant?.image || allImages[0] || null,
+  const galleryItems = React.useMemo(() => {
+    const getExternalEmbedUrl = (rawUrl, host) => {
+      if (!rawUrl) return null;
+      try {
+        const parsed = new URL(rawUrl);
+        if (host === 'YOUTUBE') {
+          let videoId = parsed.searchParams.get('v');
+          if (!videoId) {
+            const segments = parsed.pathname.split('/').filter(Boolean);
+            videoId = segments.pop();
+          }
+          if (!videoId) return rawUrl;
+          const params = new URLSearchParams(parsed.searchParams);
+          params.delete('v');
+          const paramString = params.toString();
+          return `https://www.youtube.com/embed/${videoId}${paramString ? `?${paramString}` : ''}`;
+        }
+        return rawUrl;
+      } catch (error) {
+        console.error('Failed to normalize external video url', error);
+        return rawUrl;
+      }
+    };
+
+    const mediaNodes = product?.media?.nodes ?? [];
+    if (mediaNodes.length) {
+      return mediaNodes
+        .map((node) => {
+          if (node.__typename === 'MediaImage' && node.image) {
+            return {
+              id: node.image.id ?? node.id,
+              type: 'image',
+              image: node.image,
+              thumbnailUrl: node.image.url,
+              altText: node.image.altText,
+            };
+          }
+          if (node.__typename === 'Video') {
+            const sources = (node.sources ?? []).filter((src) => Boolean(src?.url));
+            if (!sources.length) return null;
+            return {
+              id: node.id,
+              type: 'video',
+              sources,
+              thumbnailUrl: node.previewImage?.url ?? null,
+              altText: node.previewImage?.altText ?? 'Product video',
+            };
+          }
+          if (node.__typename === 'ExternalVideo') {
+            const embedUrl = getExternalEmbedUrl(node.embeddedUrl, node.host);
+            if (!embedUrl) return null;
+            return {
+              id: node.id,
+              type: 'externalVideo',
+              embedUrl,
+              thumbnailUrl: node.previewImage?.url ?? null,
+              altText: node.previewImage?.altText ?? 'Product video',
+              host: node.host,
+            };
+          }
+          return null;
+        })
+        .filter(Boolean);
+    }
+
+    const imageNodes = product?.images?.nodes ?? [];
+    return imageNodes.map((img) => ({
+      id: img.id,
+      type: 'image',
+      image: img,
+      thumbnailUrl: img.url,
+      altText: img.altText,
+    }));
+  }, [product]);
+
+  const [selectedItem, setSelectedItem] = React.useState(
+    () => galleryItems[0] ?? null,
   );
 
-  // Update selected image when variant changes
   React.useEffect(() => {
-    if (selectedVariant?.image) {
-      setSelectedImage(selectedVariant.image);
+    if (!galleryItems.length) {
+      setSelectedItem(null);
+      return;
     }
-  }, [selectedVariant]);
+    setSelectedItem((prev) => {
+      if (!prev) return galleryItems[0];
+      const match = galleryItems.find((item) => item.id === prev.id);
+      return match ?? galleryItems[0];
+    });
+  }, [galleryItems]);
+
+  React.useEffect(() => {
+    if (!selectedVariant?.image) return;
+    const match = galleryItems.find(
+      (item) =>
+        item.type === 'image' &&
+        (item.image?.id === selectedVariant.image.id ||
+          item.image?.url === selectedVariant.image.url),
+    );
+    if (match) {
+      setSelectedItem(match);
+    }
+  }, [selectedVariant, galleryItems]);
 
   // Description accordion state
   const [descOpen, setDescOpen] = React.useState(false);
@@ -127,34 +218,79 @@ export default function Product() {
         <div className="flex w-full flex-col-reverse gap-4 lg:w-3/5 lg:flex-row">
           {/* Thumbnails */}
           <div className="flex flex-row gap-2 overflow-x-auto lg:flex-col lg:overflow-y-auto lg:max-h-[500px]">
-            {allImages.map((img) => (
+            {galleryItems.map((item) => (
               <button
-                key={img.id}
+                key={item.id}
                 type="button"
-                onClick={() => setSelectedImage(img)}
+                onClick={() => setSelectedItem(item)}
                 className={`flex-shrink-0 w-16 h-16 lg:w-20 lg:h-20 rounded-lg border-2 overflow-hidden transition-all ${
-                  selectedImage?.id === img.id
+                  selectedItem?.id === item.id
                     ? 'border-red-500 shadow-md'
                     : 'border-slate-200 hover:border-slate-400'
-                }`}
+                } flex items-center justify-center bg-white`}
               >
-                <img
-                  src={img.url}
-                  alt={img.altText || 'Product thumbnail'}
-                  className="w-full h-full object-cover"
-                />
+                {item.type === 'video' || item.type === 'externalVideo' ? (
+                  <div className="relative flex h-full w-full items-center justify-center bg-slate-900 text-white">
+                    {item.thumbnailUrl ? (
+                      <img
+                        src={item.thumbnailUrl}
+                        alt={item.altText || 'Product video'}
+                        className="absolute inset-0 h-full w-full object-cover opacity-60"
+                      />
+                    ) : null}
+                    <span className="relative z-10 text-xs font-semibold tracking-wider">Video</span>
+                  </div>
+                ) : (
+                  <img
+                    src={item.thumbnailUrl}
+                    alt={item.altText || 'Product thumbnail'}
+                    className="w-full h-full object-cover"
+                  />
+                )}
               </button>
             ))}
           </div>
 
           {/* Main Image */}
           <div className="relative flex-1 flex items-center justify-center bg-slate-50 rounded-2xl overflow-hidden min-h-[300px] lg:min-h-[500px]">
-            {selectedImage ? (
-              <img
-                src={selectedImage.url}
-                alt={selectedImage.altText || title}
-                className="max-h-full max-w-full object-contain"
-              />
+            {selectedItem ? (
+              selectedItem.type === 'video' ? (
+                <video
+                  key={selectedItem.id}
+                  controls
+                  playsInline
+                  poster={selectedItem.thumbnailUrl || undefined}
+                  className="h-full w-full object-contain bg-black"
+                  style={{pointerEvents: 'auto'}}
+                >
+                  {selectedItem.sources.map((source, index) => (
+                    <source
+                      key={`${selectedItem.id}-${index}-${source.mimeType}-${source.url}`}
+                      src={source.url}
+                      type={source.mimeType || undefined}
+                    />
+                  ))}
+                  Your browser does not support the video tag.
+                </video>
+              ) : selectedItem.type === 'externalVideo' ? (
+                <div className="h-full w-full">
+                  <iframe
+                    key={`${selectedItem.id}-${selectedItem.embedUrl}`}
+                    src={selectedItem.embedUrl}
+                    title={selectedItem.altText || 'Product video'}
+                    className="h-full w-full rounded-2xl border-0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                  />
+                </div>
+              ) : (
+                <img
+                  src={selectedItem.image?.url}
+                  alt={selectedItem.image?.altText || title}
+                  className="max-h-full max-w-full object-contain"
+                />
+              )
             ) : (
               <div className="text-slate-400 text-sm">No image</div>
             )}
@@ -327,6 +463,41 @@ const PRODUCT_FRAGMENT = `#graphql
         altText
         width
         height
+      }
+    }
+    media(first: 10) {
+      nodes {
+        __typename
+        ... on MediaImage {
+          id
+          image {
+            id
+            url
+            altText
+            width
+            height
+          }
+        }
+        ... on Video {
+          id
+          previewImage {
+            url
+            altText
+          }
+          sources {
+            mimeType
+            url
+          }
+        }
+        ... on ExternalVideo {
+          id
+          host
+          embeddedUrl
+          previewImage {
+            url
+            altText
+          }
+        }
       }
     }
     options {

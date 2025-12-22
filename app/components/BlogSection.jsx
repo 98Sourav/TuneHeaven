@@ -41,17 +41,33 @@ export function BlogSection({
 
         {hasPosts ? (
           <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {posts.map((post) => (
+            {posts.map((post, index) => (
               <article
                 key={post.id}
-                className="group flex flex-col overflow-hidden rounded-3xl border border-slate-800/70 bg-slate-900/50 shadow-[0_25px_60px_rgba(2,6,23,0.65)] transition-transform duration-200 hover:-translate-y-1 hover:border-emerald-400/50"
+                className="group relative flex flex-col bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-slate-950/90 shadow-[0_25px_60px_rgba(2,6,23,0.65)] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_35px_80px_rgba(16,185,129,0.15)]"
+                style={{
+                  clipPath: index === 0 
+                    ? 'polygon(0 0, 100% 0, 100% calc(100% - 40px), calc(100% - 40px) 100%, 0 100%)' 
+                    : 'polygon(0 0, 100% 0, 100% 100%, 40px 100%, 0 calc(100% - 40px))',
+                  border: '2px solid rgba(148, 163, 184, 0.2)',
+                }}
               >
-                <Link to={post.href} className="relative block aspect-[4/3] overflow-hidden">
+                {/* Accent corner gradient */}
+                <div 
+                  className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none"
+                  style={{
+                    background: index === 0 
+                      ? 'linear-gradient(135deg, transparent 85%, rgba(16,185,129,0.2) 100%)'
+                      : 'linear-gradient(225deg, transparent 85%, rgba(16,185,129,0.2) 100%)',
+                  }}
+                />
+
+                <Link to={post.href} className="relative block aspect-[4/3] overflow-hidden" style={{clipPath: 'inherit'}}>
                   {post.imageUrl ? (
                     <img
                       src={post.imageUrl}
                       alt={post.imageAlt || post.title}
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="h-full w-full object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-110"
                       loading="lazy"
                     />
                   ) : (
@@ -59,17 +75,20 @@ export function BlogSection({
                       No image
                     </div>
                   )}
-                  <span className="absolute bottom-4 left-4 rounded-full bg-black/60 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-white backdrop-blur">
+                  {/* Gradient overlay on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-60 transition-opacity duration-300 group-hover:opacity-80" />
+                  
+                  <span className="absolute bottom-4 left-4 rounded-full bg-emerald-500/20 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-300 backdrop-blur-md border border-emerald-400/30 transition-all duration-300 group-hover:bg-emerald-500/30 group-hover:border-emerald-400/50">
                     Read more
                   </span>
                 </Link>
 
-                <div className="flex flex-1 flex-col gap-4 px-5 pb-5 pt-6">
-                  <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.24em] text-slate-400">
-                    <span>{post.author || 'TuneHeaven'}</span>
+                <div className="relative flex flex-1 flex-col gap-4 px-5 pb-6 pt-6">
+                  <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.26em] text-slate-400">
+                    <span className="font-semibold text-emerald-400">{post.author || 'TuneHeaven'}</span>
                     {post.publishedAt ? (
                       <>
-                        <span className="h-1 w-1 rounded-full bg-slate-500" aria-hidden="true" />
+                        <span className="h-1 w-1 rounded-full bg-emerald-500/60" aria-hidden="true" />
                         <span>
                           {new Intl.DateTimeFormat('en-US', {
                             month: 'short',
@@ -80,20 +99,20 @@ export function BlogSection({
                       </>
                     ) : null}
                   </div>
-                  <Link to={post.href} className="text-lg font-semibold text-white transition-colors hover:text-emerald-300">
+                  <Link to={post.href} className="text-lg font-bold leading-tight text-white transition-colors hover:text-emerald-300">
                     {post.title}
                   </Link>
-                  <p className="flex-1 text-sm text-slate-400">{post.excerpt ?? ''}</p>
+                  <p className="flex-1 text-sm leading-relaxed text-slate-400">{post.excerpt ?? ''}</p>
                   <Link
                     to={post.href}
-                    className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-emerald-300"
+                    className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.24em] text-emerald-400 transition-all duration-200 hover:gap-3 hover:text-emerald-300"
                   >
                     Continue Reading
                     <svg
-                      className="h-3.5 w-3.5"
+                      className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1"
                       fill="none"
                       stroke="currentColor"
-                      strokeWidth={2}
+                      strokeWidth={2.5}
                       viewBox="0 0 24 24"
                     >
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m-7-7 7 7-7 7" />
