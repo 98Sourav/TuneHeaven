@@ -40,6 +40,16 @@ npm run build
 npm run dev
 ```
 
-## Setup for using Customer Account API (`/account` section)
+
+
+# Below are some ScreenShots of the store
+## Home Page
+
+<img width="1920" height="3895" alt="Welcome-to-TuneHeaven-12-25-2025_08_46_PM" src="https://github.com/user-attachments/assets/dac2ff11-5bd3-4b0c-b56b-7beda9f72bb3" />
+
+
+## PDP 
+
+<img width="1920" height="1540" alt="Hydrogen-Kala-Makala-MK-C-Concert-Ukulele-12-25-2025_08_50_PM" src="https://github.com/user-attachments/assets/9fc9806d-5144-4eb3-8945-4185e94b00e9" />
 
 Follow step 1 and 2 of <https://shopify.dev/docs/custom-storefronts/building-with-the-customer-account-api/hydrogen#step-1-set-up-a-public-domain-for-local-development>
